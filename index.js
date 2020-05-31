@@ -1,7 +1,9 @@
 const express = require('express');
 const app = express();
 const morgan = require('morgan');
+const cors = require('cors');
 
+app.use(cors());
 app.use(express.json());
 app.use(
   morgan('tiny', {
@@ -88,20 +90,20 @@ app.post('/api/persons/', (req, res) => {
     });
   }
 
-  const person = {
+  const newPerson = {
     name: body.name,
     number: body.number,
     id: generateRandomId(),
     date: new Date(),
   };
-  console.log('New Person: ', person);
+  console.log('New Person: ', newPerson);
   console.log('Persons B4 insertion: ', persons);
 
-  persons = persons.concat(person);
+  persons = persons.concat(newPerson);
 
   console.log('Persons After insertion: ', persons);
 
-  res.json(body);
+  res.json(newPerson);
 });
 
 app.get('/api/persons/:id', (req, res) => {
