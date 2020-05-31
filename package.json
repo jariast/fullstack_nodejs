@@ -1,0 +1,30 @@
+{
+  "name": "fullstack_node",
+  "version": "0.0.1",
+  "description": "Fullstack course backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo  \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jariast/fullstack_nodejs.git"
+  },
+  "keywords": [
+    "learning"
+  ],
+  "author": "Juan Arias",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jariast/fullstack_nodejs/issues"
+  },
+  "homepage": "https://github.com/jariast/fullstack_nodejs#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}
