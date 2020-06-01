@@ -1,7 +1,9 @@
 const express = require('express');
 const app = express();
+require('dotenv').config();
 const morgan = require('morgan');
 const cors = require('cors');
+const Person = require('./models/people');
 
 app.use(cors());
 app.use(express.static('build'));
@@ -21,12 +23,6 @@ app.use(
     }
   )
 );
-
-const generateRandomId = () => {
-  min = Math.ceil(0);
-  max = Math.floor(9999999);
-  return Math.floor(Math.random() * (max - min)) + min;
-};
 
 let persons = [
   {
@@ -57,7 +53,9 @@ app.get('/info', (req, res) => {
 });
 
 app.get('/api/persons', (req, res) => {
-  res.json(persons);
+  Person.find({}).then((persons) => {
+    res.json(persons);
+  });
 });
 
 app.post('/api/persons/', (req, res) => {
@@ -91,33 +89,48 @@ app.post('/api/persons/', (req, res) => {
     });
   }
 
-  const newPerson = {
+  const newPerson = new Person({
     name: body.name,
     number: body.number,
-    id: generateRandomId(),
     date: new Date(),
-  };
+  });
   console.log('New Person: ', newPerson);
   console.log('Persons B4 insertion: ', persons);
 
-  persons = persons.concat(newPerson);
+  newPerson.save().then((savedPerson) => {
+    res.json(savedPerson);
+  });
 
   console.log('Persons After insertion: ', persons);
-
-  res.json(newPerson);
 });
 
 app.get('/api/persons/:id', (req, res) => {
   console.log('----****Getting by ID****----****----****----');
-  const personId = Number(req.params.id);
-  console.log('PersonId: ', personId);
-  const person = persons.find((person) => person.id === personId);
-  console.log('Person: ', person);
-  if (person) {
-    res.json(person);
-  } else {
-    res.status(404).end();
-  }
+  // const personId = Number(req.params.id);
+  const id = req.params.id;
+  console.log('PersonId: ', id);
+
+  const person = Person.findById(id)
+    .then((person) => {
+      if (person) {
+        res.json(person);
+      } else {
+        console.log('Person not found');
+        res.json.status(404).end();
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(404).send({ error: 'Wrongly formatted id' });
+    });
+
+  // const person = persons.find((person) => person.id === personId);
+  // console.log('Person: ', person);
+  // if (person) {
+  //   res.json(person);
+  // } else {
+  //   res.status(404).end();
+  // }
 });
 
 app.delete('/api/persons/:id', (req, res) => {
@@ -131,7 +144,7 @@ app.delete('/api/persons/:id', (req, res) => {
   res.status(204).end();
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Your server is running on port ${PORT}`);
 });
