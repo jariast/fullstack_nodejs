@@ -24,41 +24,29 @@ app.use(
   )
 );
 
-let persons = [
-  {
-    name: 'Arto Hellas',
-    number: '040-123456',
-    id: 1,
-  },
-  {
-    name: 'Ada Lovelace',
-    number: '39-44-5323523',
-    id: 2,
-  },
-  {
-    name: 'Dan Abramov',
-    number: '12-43-234345',
-    id: 3,
-  },
-];
-
 app.get('/', (req, res) => {
   res.send('<h1>IDK man</>');
 });
 
 app.get('/info', (req, res) => {
-  const personsCount = `<p>Phonebook has info for ${persons.length} people</p>`;
-  const date = `<p>${new Date()}</p>`;
-  res.send(personsCount + date);
+  Person.find({})
+    .then((persons) => {
+      const personsCount = `<p>Phonebook has info for ${persons.length} people</p>`;
+      const date = `<p>${new Date()}</p>`;
+      res.send(personsCount + date);
+    })
+    .catch((error) => next(error));
 });
 
 app.get('/api/persons', (req, res) => {
-  Person.find({}).then((persons) => {
-    res.json(persons);
-  });
+  Person.find({})
+    .then((persons) => {
+      res.json(persons);
+    })
+    .catch((error) => next(error));
 });
 
-app.post('/api/persons/', (req, res) => {
+app.post('/api/persons/', (req, res, next) => {
   console.log('----****POSTING NEW ITEM****----****----****----');
   console.log('Request body: ', req.body);
 
@@ -66,27 +54,14 @@ app.post('/api/persons/', (req, res) => {
 
   if (!body.name) {
     console.log('Missing Name');
-    return res.status(400).json({
-      error: 'Name missing',
-    });
-  }
-
-  const isDuplicate = persons.some(
-    (person) => person.name.toLowerCase() === body.name.toLowerCase()
-  );
-
-  if (isDuplicate) {
-    console.log('Duplicate Name');
-    return res.status(400).json({
-      error: 'Name must be unique',
-    });
+    next({ name: 'NameMissing' });
+    return;
   }
 
   if (!body.number) {
     console.log('Missing Number');
-    return res.status(400).json({
-      error: 'Number missing',
-    });
+    next({ name: 'NumberMissing' });
+    return;
   }
 
   const newPerson = new Person({
@@ -94,19 +69,18 @@ app.post('/api/persons/', (req, res) => {
     number: body.number,
     date: new Date(),
   });
-  console.log('New Person: ', newPerson);
-  console.log('Persons B4 insertion: ', persons);
 
-  newPerson.save().then((savedPerson) => {
-    res.json(savedPerson);
-  });
-
-  console.log('Persons After insertion: ', persons);
+  newPerson
+    .save()
+    .then((savedPerson) => {
+      res.json(savedPerson);
+      console.log('Saved Person: ', newPerson);
+    })
+    .catch((error) => next(error));
 });
 
 app.get('/api/persons/:id', (req, res, next) => {
   console.log('----****Getting by ID****----****----****----');
-  // const personId = Number(req.params.id);
   const id = req.params.id;
   console.log('PersonId: ', id);
 
@@ -126,14 +100,23 @@ app.delete('/api/persons/:id', (req, res, next) => {
   console.log('----****DELETE****----****----****----');
   const personId = req.params.id;
   console.log('PersonId: ', personId);
-  console.log('Persons B4 deletion: ', persons);
-  // persons = persons.filter((person) => person.id !== personId);
   Person.findByIdAndRemove(personId)
     .then((result) => {
       res.status(204).end();
     })
     .catch((error) => next(error));
-  console.log('Persons after deletion: ', persons);
+});
+
+app.put('/api/persons/:id', (req, res, next) => {
+  console.log('----****PUT****----****----****----');
+  console.log('Request body: ', req.body);
+  const personId = req.params.id;
+  const body = req.body;
+  Person.findByIdAndUpdate(personId, { number: body.number }, { new: true })
+    .then((updatedPerson) => {
+      res.json(updatedPerson);
+    })
+    .catch((error) => next(error));
 });
 
 const unknowEndpoint = (req, res) => {
@@ -147,6 +130,14 @@ const errorHandler = (error, req, res, next) => {
 
   if (error.name === 'CastError') {
     return res.status(400).send({ error: 'Wrongly formatted ID' });
+  }
+
+  if (error.name === 'NameMissing') {
+    return res.status(400).send({ error: 'Name is missing, fix it!' });
+  }
+
+  if (error.name === 'NumberMissing') {
+    return res.status(400).send({ error: 'Number is missing, fix it!' });
   }
 
   next(error);
