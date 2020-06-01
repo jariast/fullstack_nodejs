@@ -6,8 +6,8 @@ const cors = require('cors');
 const Person = require('./models/people');
 
 app.use(cors());
-app.use(express.static('build'));
 app.use(express.json());
+app.use(express.static('build'));
 app.use(
   morgan('tiny', {
     skip: (req, res) => req.method === 'POST',
@@ -104,7 +104,7 @@ app.post('/api/persons/', (req, res) => {
   console.log('Persons After insertion: ', persons);
 });
 
-app.get('/api/persons/:id', (req, res) => {
+app.get('/api/persons/:id', (req, res, next) => {
   console.log('----****Getting by ID****----****----****----');
   // const personId = Number(req.params.id);
   const id = req.params.id;
@@ -119,30 +119,40 @@ app.get('/api/persons/:id', (req, res) => {
         res.json.status(404).end();
       }
     })
-    .catch((error) => {
-      console.log(error);
-      res.status(404).send({ error: 'Wrongly formatted id' });
-    });
-
-  // const person = persons.find((person) => person.id === personId);
-  // console.log('Person: ', person);
-  // if (person) {
-  //   res.json(person);
-  // } else {
-  //   res.status(404).end();
-  // }
+    .catch((error) => next(error));
 });
 
-app.delete('/api/persons/:id', (req, res) => {
+app.delete('/api/persons/:id', (req, res, next) => {
   console.log('----****DELETE****----****----****----');
-  const personId = Number(req.params.id);
+  const personId = req.params.id;
   console.log('PersonId: ', personId);
   console.log('Persons B4 deletion: ', persons);
-  persons = persons.filter((person) => person.id !== personId);
+  // persons = persons.filter((person) => person.id !== personId);
+  Person.findByIdAndRemove(personId)
+    .then((result) => {
+      res.status(204).end();
+    })
+    .catch((error) => next(error));
   console.log('Persons after deletion: ', persons);
-
-  res.status(204).end();
 });
+
+const unknowEndpoint = (req, res) => {
+  res.status(404).send({ error: 'unknown endpoint' });
+};
+
+app.use(unknowEndpoint);
+
+const errorHandler = (error, req, res, next) => {
+  console.log('Error in error handler', error.name);
+
+  if (error.name === 'CastError') {
+    return res.status(400).send({ error: 'Wrongly formatted ID' });
+  }
+
+  next(error);
+};
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
