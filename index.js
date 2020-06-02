@@ -112,11 +112,19 @@ app.put('/api/persons/:id', (req, res, next) => {
   console.log('Request body: ', req.body);
   const personId = req.params.id;
   const body = req.body;
-  Person.findByIdAndUpdate(personId, { number: body.number }, { new: true })
+  const options = { new: true, runValidators: true };
+  Person.findByIdAndUpdate(personId, { number: body.number }, options)
     .then((updatedPerson) => {
-      res.json(updatedPerson);
+      if (updatedPerson) {
+        res.json(updatedPerson);
+      } else {
+        next({ name: 'NotFound' });
+      }
     })
-    .catch((error) => next(error));
+    .catch((error) => {
+      console.log('Error on update:', error);
+      next(error);
+    });
 });
 
 const unknowEndpoint = (req, res) => {
@@ -138,6 +146,14 @@ const errorHandler = (error, req, res, next) => {
 
   if (error.name === 'NumberMissing') {
     return res.status(400).send({ error: 'Number is missing, fix it!' });
+  }
+
+  if (error.name === 'ValidationError') {
+    return res.status(400).send({ error: error.message });
+  }
+
+  if (error.name === 'NotFound') {
+    return res.status(404).send({ error: 'Person no longer exists' });
   }
 
   next(error);

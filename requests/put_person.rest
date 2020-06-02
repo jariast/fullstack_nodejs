@@ -1,9 +1,8 @@
-PUT http://localhost:3001/api/persons/5ed526045d1e644c88c0f3a3
+PUT http://localhost:3001/api/persons/5ed526045d1e644c88c0f3a6
 Content-Type: application/json
 
 {
     "name": "test", 
-    "number": "mod number", 
-    "id": 2759551, 
+    "number": "12345", 
     "date": "2020-06-01T22:44:38.388Z"
 }
