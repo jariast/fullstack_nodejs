@@ -10,16 +10,16 @@ app.use(express.json());
 app.use(express.static('build'));
 app.use(
   morgan('tiny', {
-    skip: (req, res) => req.method === 'POST',
+    skip: (req) => req.method === 'POST',
   })
 );
 
-morgan.token('type', (req, res) => JSON.stringify(req.body));
+morgan.token('type', (req) => JSON.stringify(req.body));
 app.use(
   morgan(
     ':method :url :status :res[content-length] - :response-time ms :type',
     {
-      skip: (req, res) => req.method !== 'POST',
+      skip: (req) => req.method !== 'POST',
     }
   )
 );
@@ -28,7 +28,7 @@ app.get('/', (req, res) => {
   res.send('<h1>IDK man</>');
 });
 
-app.get('/info', (req, res) => {
+app.get('/info', (req, res, next) => {
   Person.find({})
     .then((persons) => {
       const personsCount = `<p>Phonebook has info for ${persons.length} people</p>`;
@@ -38,7 +38,7 @@ app.get('/info', (req, res) => {
     .catch((error) => next(error));
 });
 
-app.get('/api/persons', (req, res) => {
+app.get('/api/persons', (req, res, next) => {
   Person.find({})
     .then((persons) => {
       res.json(persons);
@@ -84,7 +84,7 @@ app.get('/api/persons/:id', (req, res, next) => {
   const id = req.params.id;
   console.log('PersonId: ', id);
 
-  const person = Person.findById(id)
+  Person.findById(id)
     .then((person) => {
       if (person) {
         res.json(person);
@@ -101,7 +101,7 @@ app.delete('/api/persons/:id', (req, res, next) => {
   const personId = req.params.id;
   console.log('PersonId: ', personId);
   Person.findByIdAndRemove(personId)
-    .then((result) => {
+    .then(() => {
       res.status(204).end();
     })
     .catch((error) => next(error));
@@ -161,4 +161,5 @@ app.use(errorHandler);
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Your server is running on port ${PORT}`);
+  console.log('leve');
 });
