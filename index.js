@@ -122,7 +122,6 @@ app.put('/api/persons/:id', (req, res, next) => {
       }
     })
     .catch((error) => {
-      console.log('Error on update:', error);
       next(error);
     });
 });
@@ -134,8 +133,6 @@ const unknowEndpoint = (req, res) => {
 app.use(unknowEndpoint);
 
 const errorHandler = (error, req, res, next) => {
-  console.log('Error in error handler', error.name);
-
   if (error.name === 'CastError') {
     return res.status(400).send({ error: 'Wrongly formatted ID' });
   }
