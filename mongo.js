@@ -32,7 +32,7 @@ if (name && number) {
     date: new Date(),
   });
 
-  person.save().then((result) => {
+  person.save().then(() => {
     console.log(`Added "${name}" with number: ${number} to the DB`);
     mongoose.connection.close();
   });
